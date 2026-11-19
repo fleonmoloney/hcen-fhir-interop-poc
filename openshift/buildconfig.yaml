@@ -10,7 +10,7 @@ spec:
   source:
     type: Git
     git:
-      uri: https://github.com/REEMPLAZAR-USUARIO/hcen-fhir-interop-poc.git
+      uri: https://github.com/fleonmoloney/hcen-fhir-interop-poc.git
       ref: main
   strategy:
     type: Docker
