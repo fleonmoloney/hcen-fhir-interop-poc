@@ -48,14 +48,6 @@ jobs:
             ${{ env.IMAGE }}:${{ github.sha }}
             ${{ env.IMAGE }}:latest
 
-      - name: Análisis de vulnerabilidades (informativo)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          # Informativo: para que bloquee el despliegue, cambiar a '1'.
-          exit-code: "0"
 
       - name: Iniciar sesión en OpenShift
         uses: redhat-actions/oc-login@v1

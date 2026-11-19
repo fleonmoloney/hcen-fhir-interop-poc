@@ -82,7 +82,7 @@ curl -X POST -H "Content-Type: application/xml" \
 | Etapa | Dónde | Qué hace |
 |---|---|---|
 | **CI** | `.github/workflows/ci.yml` | En cada push: compila, corre los tests y construye la imagen Docker |
-| **CD (GitHub Actions)** | `.github/workflows/cd-openshift.yml` | Manual o al publicar una etiqueta `v*`: tests, publica la imagen en GitHub Container Registry, análisis con Trivy (informativo), la importa al ImageStream de OpenShift y espera el rollout |
+| **CD (GitHub Actions)** | `.github/workflows/cd-openshift.yml` | Manual o al publicar una etiqueta `v*`: tests, publica la imagen en GitHub Container Registry, la importa al ImageStream de OpenShift y espera el rollout |
 | **CI/CD nativo en OpenShift (Tekton)** | `tekton/` | `Pipeline` de 4 tareas: clonar, `mvn verify`, `oc start-build` y esperar el rolling update |
 | **Recursos de OpenShift** | `openshift/` | `ImageStream`, `BuildConfig` (build Docker desde Git), `Deployment` con trigger de imagen y rolling update, `Service`, `Route`, `HPA` |
 
@@ -95,7 +95,8 @@ docker run -p 8080:8080 -e LOAD_SAMPLE=true hcen-fhir-interop-poc
 
 ### Desplegar en OpenShift
 
-> Los manifiestos y los pipelines **no fueron probados contra un clúster** al escribirlos. Hay que reemplazar `REEMPLAZAR-USUARIO` (URL del repo) y `REEMPLAZAR-HOST-DE-LA-ROUTE`.
+> **Estado.** Los manifiestos de `openshift` y el pipeline de `tekton` fueron probados en el Red Hat OpenShift Developer Sandbox (build desde Git, rolling update, Route con TLS y pipeline Tekton con sus 4 tareas en `Succeeded`). El CD con GitHub Actions no fue probado contra un clúster.
+> Al reutilizar los manifiestos hay que cambiar la URL del repositorio en `openshift/buildconfig.yaml` y `tekton/pipelinerun.yaml`, y `PUBLIC_BASE_URL` en `openshift/deployment.yaml` (el host de la Route).
 
 ```bash
 oc apply -k openshift/                     # ImageStream, BuildConfig, Deployment, Service, Route, HPA
@@ -128,7 +129,7 @@ Limitación conocida: el pipeline prueba la revisión indicada en `git-revision`
 
 ### CD con GitHub Actions
 
-Secretos necesarios en el repositorio: `OPENSHIFT_SERVER`, `OPENSHIFT_TOKEN`, `OPENSHIFT_NAMESPACE`. La imagen en `ghcr.io` debe ser pública (o el proyecto de OpenShift debe tener un secreto de pull). El análisis con Trivy es informativo: con `exit-code: "1"` pasa a bloquear el despliegue.
+Secretos necesarios en el repositorio: `OPENSHIFT_SERVER`, `OPENSHIFT_TOKEN`, `OPENSHIFT_NAMESPACE`. La imagen en `ghcr.io` debe ser pública (o el proyecto de OpenShift debe tener un secreto de pull).
 
 ## Decisiones técnicas
 
