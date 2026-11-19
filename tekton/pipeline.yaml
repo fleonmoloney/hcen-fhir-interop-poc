@@ -1,0 +1,52 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: hcen-fhir-interop-poc-pipeline
+spec:
+  description: >-
+    Clona el repositorio, ejecuta los tests, construye la imagen con el BuildConfig
+    y espera el rolling update del Deployment (que se dispara por el trigger del ImageStream).
+  params:
+    - name: git-url
+      type: string
+    - name: git-revision
+      type: string
+      default: main
+    - name: app-name
+      type: string
+      default: hcen-fhir-interop-poc
+  workspaces:
+    - name: shared
+  tasks:
+    - name: clone
+      taskRef:
+        name: git-clone-simple
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: revision
+          value: $(params.git-revision)
+      workspaces:
+        - name: source
+          workspace: shared
+    - name: test
+      runAfter: ["clone"]
+      taskRef:
+        name: maven-verify
+      workspaces:
+        - name: source
+          workspace: shared
+    - name: build-image
+      runAfter: ["test"]
+      taskRef:
+        name: oc-start-build
+      params:
+        - name: build-name
+          value: $(params.app-name)
+    - name: deploy
+      runAfter: ["build-image"]
+      taskRef:
+        name: oc-rollout-status
+      params:
+        - name: deployment
+          value: $(params.app-name)

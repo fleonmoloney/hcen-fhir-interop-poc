@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: hcen-fhir-interop-poc
+  labels:
+    app: hcen-fhir-interop-poc
+spec:
+  to:
+    kind: Service
+    name: hcen-fhir-interop-poc
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

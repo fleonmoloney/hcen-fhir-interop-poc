@@ -1,0 +1,31 @@
+# Construye la imagen dentro de OpenShift con el Dockerfile del repo y la publica en el ImageStream.
+# Ajustar la URL del repositorio antes de aplicar.
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: hcen-fhir-interop-poc
+  labels:
+    app: hcen-fhir-interop-poc
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/REEMPLAZAR-USUARIO/hcen-fhir-interop-poc.git
+      ref: main
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: hcen-fhir-interop-poc:latest
+  triggers:
+    - type: ConfigChange
+    # Para construir automáticamente en cada push: crear antes el secreto del webhook
+    # (oc create secret generic github-webhook-secret --from-literal=WebHookSecretKey=<valor>)
+    # y descomentar:
+    # - type: GitHub
+    #   github:
+    #     secretReference:
+    #       name: github-webhook-secret

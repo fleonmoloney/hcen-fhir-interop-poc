@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Documento CDA R2 de ejemplo con datos 100% ficticios (no corresponde a ninguna persona ni institución).
+     Solo trae la cabecera y un cuerpo mínimo; no está validado contra el esquema completo de CDA. -->
+<ClinicalDocument xmlns="urn:hl7-org:v3">
+  <typeId root="2.16.840.1.113883.1.3" extension="POCD_HD000040"/>
+  <id root="2.25.100000000000000000000000000000002" extension="INF-0001"/>
+  <code code="18842-5" codeSystem="2.16.840.1.113883.6.1" displayName="Discharge summary"/>
+  <title>Informe de alta</title>
+  <effectiveTime value="20261110093000-0300"/>
+  <confidentialityCode code="N" codeSystem="2.16.840.1.113883.5.25"/>
+  <languageCode code="es-UY"/>
+  <recordTarget>
+    <patientRole>
+      <id root="2.25.100000000000000000000000000000003" extension="EJ-0001"/>
+      <patient>
+        <name>
+          <given>Ana</given>
+          <family>Ejemplo</family>
+        </name>
+        <administrativeGenderCode code="F" codeSystem="2.16.840.1.113883.5.1"/>
+        <birthTime value="19800215"/>
+      </patient>
+    </patientRole>
+  </recordTarget>
+  <author>
+    <time value="20261110093000-0300"/>
+    <assignedAuthor>
+      <id root="2.25.100000000000000000000000000000004" extension="MED-0001"/>
+      <assignedPerson>
+        <name>
+          <given>Luis</given>
+          <family>Prueba</family>
+        </name>
+      </assignedPerson>
+    </assignedAuthor>
+  </author>
+  <custodian>
+    <assignedCustodian>
+      <representedCustodianOrganization>
+        <id root="2.25.100000000000000000000000000000005"/>
+        <name>Hospital Ficticio</name>
+      </representedCustodianOrganization>
+    </assignedCustodian>
+  </custodian>
+  <component>
+    <structuredBody>
+      <component>
+        <section>
+          <title>Resumen</title>
+          <text>Paciente de ejemplo dado de alta sin incidentes. Texto ficticio.</text>
+        </section>
+      </component>
+    </structuredBody>
+  </component>
+</ClinicalDocument>

@@ -1,0 +1,10 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: hcen-fhir-interop-poc
+  labels:
+    app: hcen-fhir-interop-poc
+spec:
+  # Permite que el Deployment referencie la imagen solo por nombre (hcen-fhir-interop-poc:latest).
+  lookupPolicy:
+    local: true

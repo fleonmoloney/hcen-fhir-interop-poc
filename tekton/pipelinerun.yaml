@@ -1,0 +1,25 @@
+# Se lanza con: oc create -f tekton/pipelinerun.yaml   (usa generateName, no "apply")
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: hcen-fhir-interop-poc-run-
+spec:
+  pipelineRef:
+    name: hcen-fhir-interop-poc-pipeline
+  params:
+    - name: git-url
+      value: https://github.com/REEMPLAZAR-USUARIO/hcen-fhir-interop-poc.git
+    - name: git-revision
+      value: main
+  taskRunTemplate:
+    # OpenShift Pipelines crea la cuenta "pipeline" con permisos para iniciar builds y ver el rollout.
+    serviceAccountName: pipeline
+  workspaces:
+    - name: shared
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi

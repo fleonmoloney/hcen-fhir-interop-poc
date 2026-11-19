@@ -1,0 +1,66 @@
+# Manifiesto de ejemplo. No fue probado contra un clúster: ajustar variables antes de aplicar.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hcen-fhir-interop-poc
+  labels:
+    app: hcen-fhir-interop-poc
+  annotations:
+    # Cada vez que el ImageStreamTag cambia, OpenShift actualiza la imagen y dispara un rolling update.
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"hcen-fhir-interop-poc:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"app\")].image"}]'
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5 # permite "oc rollout undo deployment/hcen-fhir-interop-poc"
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: hcen-fhir-interop-poc
+  template:
+    metadata:
+      labels:
+        app: hcen-fhir-interop-poc
+    spec:
+      containers:
+        - name: app
+          image: hcen-fhir-interop-poc:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: LOAD_SAMPLE
+              value: "true"
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75"
+            # URL pública de la Route (oc get route), para que los enlaces del DocumentReference sean correctos.
+            - name: PUBLIC_BASE_URL
+              value: "https://REEMPLAZAR-HOST-DE-LA-ROUTE"
+          readinessProbe:
+            httpGet:
+              path: /fhir/metadata
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /fhir/metadata
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault

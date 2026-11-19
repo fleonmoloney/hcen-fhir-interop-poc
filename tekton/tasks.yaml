@@ -1,0 +1,82 @@
+# Tasks propias (sin depender de ClusterTasks ni del Tekton Hub).
+# Requieren OpenShift Pipelines (Tekton) instalado en el clúster.
+# Usan la API tekton.dev/v1; si el clúster solo ofrece v1beta1, cambiar el apiVersion.
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: git-clone-simple
+spec:
+  description: Clona un repositorio Git en el workspace.
+  params:
+    - name: url
+      type: string
+    - name: revision
+      type: string
+      default: main
+  workspaces:
+    - name: source
+  steps:
+    - name: clone
+      image: docker.io/alpine/git:latest
+      env:
+        - name: HOME
+          value: /tmp
+      script: |
+        #!/bin/sh
+        set -eu
+        git clone --depth 1 --branch "$(params.revision)" "$(params.url)" "$(workspaces.source.path)"
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: maven-verify
+spec:
+  description: Compila el proyecto y ejecuta los tests con Maven.
+  workspaces:
+    - name: source
+  steps:
+    - name: verify
+      image: docker.io/library/maven:3.9-eclipse-temurin-17
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: HOME
+          value: /tmp
+      script: |
+        #!/bin/sh
+        set -eu
+        # Repositorio local dentro del workspace: con UID arbitrario el HOME no es escribible.
+        mvn -B -ntp -Dmaven.repo.local=$(workspaces.source.path)/.m2 verify
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: oc-start-build
+spec:
+  description: Dispara el BuildConfig de OpenShift y espera a que termine.
+  params:
+    - name: build-name
+      type: string
+  steps:
+    - name: start-build
+      image: quay.io/openshift/origin-cli:latest
+      script: |
+        #!/bin/sh
+        set -eu
+        oc start-build "$(params.build-name)" --follow --wait
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: oc-rollout-status
+spec:
+  description: Espera a que el Deployment termine su rolling update.
+  params:
+    - name: deployment
+      type: string
+  steps:
+    - name: rollout-status
+      image: quay.io/openshift/origin-cli:latest
+      script: |
+        #!/bin/sh
+        set -eu
+        oc rollout status "deployment/$(params.deployment)" --timeout=300s

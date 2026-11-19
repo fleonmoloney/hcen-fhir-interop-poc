@@ -1,0 +1,73 @@
+name: CD OpenShift
+
+# Manual o al publicar una etiqueta de versión (v0.1.0, v0.2.0...).
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      # Secretos del repositorio (Settings > Secrets and variables > Actions):
+      #   OPENSHIFT_SERVER, OPENSHIFT_TOKEN, OPENSHIFT_NAMESPACE
+      OPENSHIFT_NAMESPACE: ${{ secrets.OPENSHIFT_NAMESPACE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Tests
+        run: mvn -B verify
+
+      - name: Nombre de la imagen (ghcr exige minúsculas)
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir y publicar la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+
+      - name: Análisis de vulnerabilidades (informativo)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          # Informativo: para que bloquee el despliegue, cambiar a '1'.
+          exit-code: "0"
+
+      - name: Iniciar sesión en OpenShift
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
+
+      - name: Desplegar
+        # Importa la imagen al ImageStream; el trigger del Deployment dispara el rolling update.
+        # La imagen en ghcr debe ser pública o el proyecto debe tener un secreto de pull.
+        run: |
+          oc import-image hcen-fhir-interop-poc:latest \
+            --from="${IMAGE}:${GITHUB_SHA}" --confirm
+          oc rollout status deployment/hcen-fhir-interop-poc --timeout=300s
