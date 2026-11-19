@@ -48,6 +48,10 @@ jobs:
             ${{ env.IMAGE }}:${{ github.sha }}
             ${{ env.IMAGE }}:latest
 
+      - name: Instalar oc
+        uses: redhat-actions/openshift-tools-installer@v1
+        with:
+          oc: "4"
 
       - name: Iniciar sesión en OpenShift
         uses: redhat-actions/oc-login@v1
