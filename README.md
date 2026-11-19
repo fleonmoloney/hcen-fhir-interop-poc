@@ -95,7 +95,7 @@ docker run -p 8080:8080 -e LOAD_SAMPLE=true hcen-fhir-interop-poc
 
 ### Desplegar en OpenShift
 
-> **Estado.** Los manifiestos de `openshift` y el pipeline de `tekton` fueron probados en el Red Hat OpenShift Developer Sandbox (build desde Git, rolling update, Route con TLS y pipeline Tekton con sus 4 tareas en `Succeeded`). El CD con GitHub Actions no fue probado contra un clúster.
+> **Estado.** Los manifiestos de `openshift` y el pipeline de `tekton` fueron probados en el Red Hat OpenShift Developer Sandbox (build desde Git, rolling update, Route con TLS y pipeline Tekton con sus 4 tareas en `Succeeded`). El CD con GitHub Actions también fue probado: publica la imagen en ghcr.io, la importa al ImageStream y el Deployment hace el rolling update.
 > Al reutilizar los manifiestos hay que cambiar la URL del repositorio en `openshift/buildconfig.yaml` y `tekton/pipelinerun.yaml`, y `PUBLIC_BASE_URL` en `openshift/deployment.yaml` (el host de la Route).
 
 ```bash
